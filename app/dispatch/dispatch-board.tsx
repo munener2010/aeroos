@@ -50,7 +50,10 @@ const columns = [
 
 const nextStatuses: Record<
   string,
-  Array<{ status: string; label: string }>
+  Array<{
+    status: string;
+    label: string;
+  }>
 > = {
   scheduled: [
     {
@@ -122,12 +125,7 @@ const nextStatuses: Record<
     },
   ],
 
-  post_flight: [
-    {
-      status: "closed",
-      label: "Close flight",
-    },
-  ],
+  post_flight: [],
 
   delayed: [
     {
@@ -250,14 +248,21 @@ export default function DispatchBoard({
           <div className="flex gap-3">
             <a
               href="/flights"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+              className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-800"
             >
               Flights
             </a>
 
             <a
+              href="/flights/new"
+              className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+            >
+              Create Booking
+            </a>
+
+            <a
               href="/dashboard"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+              className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-800"
             >
               Dashboard
             </a>
@@ -322,7 +327,7 @@ export default function DispatchBoard({
 
             <a
               href="/flights/new"
-              className="mt-6 inline-flex rounded-xl bg-sky-500 px-5 py-3 font-semibold text-slate-950 hover:bg-sky-400"
+              className="mt-6 inline-flex rounded-xl bg-sky-500 px-5 py-3 font-semibold text-slate-950 transition hover:bg-sky-400"
             >
               Create booking
             </a>
@@ -441,7 +446,10 @@ function FlightCard({
               type="button"
               disabled={updating}
               onClick={() =>
-                onTransition(flight.id, action.status)
+                onTransition(
+                  flight.id,
+                  action.status
+                )
               }
               className="w-full rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -453,10 +461,31 @@ function FlightCard({
         </div>
       )}
 
+      {flight.status === "post_flight" && (
+        <a
+          href={`/dispatch/${flight.id}/post-flight`}
+          className="mt-4 block w-full rounded-lg bg-sky-500 px-3 py-2 text-center text-xs font-semibold text-slate-950 transition hover:bg-sky-400"
+        >
+          Complete post-flight
+        </a>
+      )}
+
       {flight.status === "pre_flight" && (
         <p className="mt-3 text-[11px] leading-5 text-slate-500">
-          Dispatch will run the final booking validation again before the
+          Dispatch runs the final booking validation again before the
           aircraft can be dispatched.
+        </p>
+      )}
+
+      {flight.status === "closed" && (
+        <p className="mt-3 text-[11px] leading-5 text-emerald-500/80">
+          Flight completed and closed.
+        </p>
+      )}
+
+      {flight.status === "cancelled" && (
+        <p className="mt-3 text-[11px] leading-5 text-red-400/80">
+          Flight cancelled.
         </p>
       )}
     </div>
