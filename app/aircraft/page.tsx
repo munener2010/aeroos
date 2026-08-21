@@ -94,8 +94,13 @@ export default async function AircraftPage() {
                       className="border-b border-slate-800 last:border-b-0"
                     >
                       <td className="px-5 py-4 font-semibold">
-                        {item.registration}
-                      </td>
+  <Link
+    href={`/aircraft/${item.id}`}
+    className="text-sky-400 hover:text-sky-300"
+  >
+    {item.registration}
+  </Link>
+</td>
 
                       <td className="px-5 py-4 text-slate-300">
                         {item.aircraft_type}
