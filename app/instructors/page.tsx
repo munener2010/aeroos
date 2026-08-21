@@ -50,36 +50,36 @@ export default async function InstructorsPage() {
             <h1 className="mt-1 text-2xl font-bold">Instructors</h1>
 
             <p className="mt-1 text-sm text-slate-400">
-              Manage instructors, qualifications, and operational information.
+              Manage instructors, qualifications, availability, and students.
             </p>
           </div>
 
-          <Link
-            href="/dashboard"
-            className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
-          >
-            Dashboard
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              href="/dashboard"
+              className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-800"
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              href="/instructors/new"
+              className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+            >
+              Add instructor
+            </Link>
+          </div>
         </div>
       </header>
 
       <section className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-bold">Instructor team</h2>
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold">Instructor team</h2>
 
-            <p className="mt-2 text-slate-400">
-              {instructors?.length ?? 0} instructor
-              {(instructors?.length ?? 0) === 1 ? "" : "s"}
-            </p>
-          </div>
-
-          <Link
-            href="/instructors/new"
-            className="rounded-xl bg-sky-500 px-5 py-3 font-semibold text-slate-950 hover:bg-sky-400"
-          >
-            Add instructor
-          </Link>
+          <p className="mt-2 text-slate-400">
+            {instructors?.length ?? 0} instructor
+            {(instructors?.length ?? 0) === 1 ? "" : "s"}
+          </p>
         </div>
 
         {!instructors || instructors.length === 0 ? (
@@ -93,7 +93,7 @@ export default async function InstructorsPage() {
 
             <Link
               href="/instructors/new"
-              className="mt-6 inline-flex rounded-xl bg-sky-500 px-5 py-3 font-semibold text-slate-950 hover:bg-sky-400"
+              className="mt-6 inline-flex rounded-xl bg-sky-500 px-5 py-3 font-semibold text-slate-950 transition hover:bg-sky-400"
             >
               Add first instructor
             </Link>
@@ -135,13 +135,14 @@ export default async function InstructorsPage() {
                       <td className="px-5 py-4">
                         <Link
                           href={`/instructors/${instructor.id}`}
-                          className="font-semibold text-sky-400 hover:text-sky-300"
+                          className="font-semibold text-sky-400 transition hover:text-sky-300"
                         >
                           {instructor.full_name}
                         </Link>
 
                         <p className="mt-1 text-xs text-slate-500">
-                          {instructor.instructor_number || "No instructor number"}
+                          {instructor.instructor_number ||
+                            "No instructor number"}
                         </p>
                       </td>
 
@@ -156,7 +157,9 @@ export default async function InstructorsPage() {
                       </td>
 
                       <td className="px-5 py-4 text-slate-300">
-                        {Number(instructor.total_instruction_hours).toFixed(2)}
+                        {Number(
+                          instructor.total_instruction_hours
+                        ).toFixed(2)}
                       </td>
 
                       <td className="px-5 py-4 text-slate-400">
