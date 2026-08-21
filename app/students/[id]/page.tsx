@@ -76,7 +76,31 @@ export default async function StudentDetailPage({
     notFound();
   }
 
-  // Get active enrollment.
+  let assignedInstructor: {
+    id: string;
+    full_name: string;
+    instructor_number: string | null;
+    instructor_type: string | null;
+  } | null = null;
+
+  if (student.assigned_instructor_id) {
+    const { data: instructor, error: instructorError } =
+      await supabase
+        .from("instructors")
+        .select(
+          "id, full_name, instructor_number, instructor_type"
+        )
+        .eq("id", student.assigned_instructor_id)
+        .eq("organization_id", organizationId)
+        .maybeSingle();
+
+    if (instructorError) {
+      throw new Error(instructorError.message);
+    }
+
+    assignedInstructor = instructor;
+  }
+
   const { data: activeEnrollment, error: enrollmentError } =
     await supabase
       .from("student_training_enrollments")
@@ -96,13 +120,13 @@ export default async function StudentDetailPage({
   let lessonsById = new Map<string, Lesson>();
 
   if (activeEnrollment) {
-    // Get program separately.
-    const { data: program, error: programError } = await supabase
-      .from("training_programs")
-      .select("id, name, status")
-      .eq("id", activeEnrollment.training_program_id)
-      .eq("organization_id", organizationId)
-      .maybeSingle();
+    const { data: program, error: programError } =
+      await supabase
+        .from("training_programs")
+        .select("id, name, status")
+        .eq("id", activeEnrollment.training_program_id)
+        .eq("organization_id", organizationId)
+        .maybeSingle();
 
     if (programError) {
       throw new Error(programError.message);
@@ -112,7 +136,6 @@ export default async function StudentDetailPage({
       programName = program.name;
     }
 
-    // Get progress.
     const { data: progressData, error: progressError } =
       await supabase
         .from("student_lesson_progress")
@@ -137,16 +160,18 @@ export default async function StudentDetailPage({
 
     progressRows = progressData ?? [];
 
-    // Get the lessons separately.
     const lessonIds = progressRows.map((row) => row.lesson_id);
 
     if (lessonIds.length > 0) {
-      const { data: lessons, error: lessonsError } = await supabase
-        .from("training_lessons")
-        .select("id, name, lesson_order, lesson_type")
-        .eq("organization_id", organizationId)
-        .in("id", lessonIds)
-        .order("lesson_order", { ascending: true });
+      const { data: lessons, error: lessonsError } =
+        await supabase
+          .from("training_lessons")
+          .select(
+            "id, name, lesson_order, lesson_type"
+          )
+          .eq("organization_id", organizationId)
+          .in("id", lessonIds)
+          .order("lesson_order", { ascending: true });
 
       if (lessonsError) {
         throw new Error(lessonsError.message);
@@ -196,6 +221,13 @@ export default async function StudentDetailPage({
             </Link>
 
             <Link
+              href={`/students/${student.id}/instructor`}
+              className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+            >
+              Assign instructor
+            </Link>
+
+            <Link
               href={`/students/${student.id}/training/enroll`}
               className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400"
             >
@@ -207,11 +239,12 @@ export default async function StudentDetailPage({
 
       <section className="mx-auto max-w-7xl px-6 py-10">
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Student overview */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 lg:col-span-2">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div>
-                <p className="text-sm text-slate-400">Student pilot</p>
+                <p className="text-sm text-slate-400">
+                  Student pilot
+                </p>
 
                 <h2 className="mt-1 text-3xl font-bold">
                   {student.full_name}
@@ -228,19 +261,24 @@ export default async function StudentDetailPage({
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <InfoCard label="Email" value={student.email || "—"} />
+
               <InfoCard label="Phone" value={student.phone || "—"} />
+
               <InfoCard
                 label="Student number"
                 value={student.student_number || "—"}
               />
+
               <InfoCard
                 label="Enrollment date"
                 value={student.enrollment_date || "—"}
               />
+
               <InfoCard
                 label="Target completion"
                 value={student.target_completion_date || "—"}
               />
+
               <InfoCard
                 label="Training program"
                 value={student.training_program || "—"}
@@ -248,7 +286,6 @@ export default async function StudentDetailPage({
             </div>
           </div>
 
-          {/* Hours */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
             <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">
               Training hours
@@ -257,17 +294,78 @@ export default async function StudentDetailPage({
             <div className="mt-6 space-y-4">
               <InfoCard
                 label="Flight hours"
-                value={Number(student.total_flight_hours).toFixed(2)}
+                value={Number(
+                  student.total_flight_hours
+                ).toFixed(2)}
               />
 
               <InfoCard
                 label="Ground hours"
-                value={Number(student.total_ground_hours).toFixed(2)}
+                value={Number(
+                  student.total_ground_hours
+                ).toFixed(2)}
               />
             </div>
           </div>
 
-          {/* Training */}
+          {/* Instructor */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 lg:col-span-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+                  Primary instructor
+                </p>
+
+                <h3 className="mt-2 text-xl font-semibold">
+                  {assignedInstructor
+                    ? assignedInstructor.full_name
+                    : "No instructor assigned"}
+                </h3>
+              </div>
+
+              <Link
+                href={`/students/${student.id}/instructor`}
+                className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+              >
+                {assignedInstructor
+                  ? "Change instructor"
+                  : "Assign instructor"}
+              </Link>
+            </div>
+
+            {assignedInstructor && (
+              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                <InfoCard
+                  label="Instructor number"
+                  value={
+                    assignedInstructor.instructor_number || "—"
+                  }
+                />
+
+                <InfoCard
+                  label="Instructor type"
+                  value={
+                    assignedInstructor.instructor_type || "—"
+                  }
+                />
+
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                    Profile
+                  </p>
+
+                  <Link
+                    href={`/instructors/${assignedInstructor.id}`}
+                    className="mt-2 inline-block font-medium text-sky-400 hover:text-sky-300"
+                  >
+                    View instructor
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Training enrollment */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 lg:col-span-3">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div>
@@ -291,11 +389,6 @@ export default async function StudentDetailPage({
               <div className="mt-6 rounded-xl border border-dashed border-slate-700 p-8 text-center">
                 <p className="font-medium text-slate-200">
                   Student is not enrolled in a training program
-                </p>
-
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Enroll this student in a training program to begin tracking
-                  lesson progress.
                 </p>
 
                 <Link
@@ -369,12 +462,14 @@ export default async function StudentDetailPage({
                   </p>
 
                   <p className="mt-2 text-sm text-slate-400">
-                    Enrollment progress records will appear here.
+                    Enroll the student in training to create progress records.
                   </p>
                 </div>
               ) : (
                 progressRows.map((progress) => {
-                  const lesson = lessonsById.get(progress.lesson_id);
+                  const lesson = lessonsById.get(
+                    progress.lesson_id
+                  );
 
                   return (
                     <div
@@ -382,21 +477,19 @@ export default async function StudentDetailPage({
                       className="rounded-xl border border-slate-800 bg-slate-950 p-5"
                     >
                       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                        <div>
-                          <div className="flex items-center gap-3">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-xs font-bold text-slate-300">
-                              {lesson?.lesson_order ?? "—"}
-                            </span>
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-xs font-bold text-slate-300">
+                            {lesson?.lesson_order ?? "—"}
+                          </span>
 
-                            <div>
-                              <h4 className="font-semibold text-slate-100">
-                                {lesson?.name || "Unknown lesson"}
-                              </h4>
+                          <div>
+                            <h4 className="font-semibold text-slate-100">
+                              {lesson?.name || "Unknown lesson"}
+                            </h4>
 
-                              <p className="text-xs uppercase tracking-wider text-slate-500">
-                                {lesson?.lesson_type || "Unknown"}
-                              </p>
-                            </div>
+                            <p className="text-xs uppercase tracking-wider text-slate-500">
+                              {lesson?.lesson_type || "Unknown"}
+                            </p>
                           </div>
                         </div>
 
@@ -430,19 +523,8 @@ export default async function StudentDetailPage({
             </div>
           </div>
 
-          {/* Instructor */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-              Instructor
-            </p>
-
-            <p className="mt-4 text-sm leading-6 text-slate-400">
-              Instructor assignment will be connected next.
-            </p>
-          </div>
-
           {/* Notes */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 lg:col-span-3">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
             <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">
               Notes
             </p>
@@ -478,9 +560,7 @@ function InfoCard({
         {label}
       </p>
 
-      <p className="mt-2 font-medium text-slate-200">
-        {value}
-      </p>
+      <p className="mt-2 font-medium text-slate-200">{value}</p>
     </div>
   );
 }
